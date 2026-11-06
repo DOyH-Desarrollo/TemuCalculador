@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Cálculo de Cobros TEMU</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#FB7701">
+    <meta name="description" content="Calculadora de cobros para pedidos TEMU con conversión automática">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cálculo TEMU">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Íconos -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <style>
+        :root {
+            --primary: #FB7701;
+            --primary-dark: #E56B00;
+            --secondary: #FFF3E8;
+            --bg: #f4f6f9;
+            --text: #333;
+            --success: #2e7d32;
+            --warning: #f57c00;
+            --danger: #d32f2f;
+            --border: #e0e0e0;
+            --info: #1565c0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .calculator-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(251, 119, 1, 0.15);
+            width: 100%;
+            max-width: 520px;
+            padding: 28px;
+            box-sizing: border-box;
+            border-top: 6px solid var(--primary);
+            position: relative;
+        }
+        .install-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--primary);
+            color: white;
+            padding: 16px;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+        }
+        .install-banner.show {
+            display: flex;
+        }
+        .install-banner-text {
+            flex: 1;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .install-banner-btn {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-left: 12px;
+            transition: transform 0.2s;
+        }
+        .install-banner-btn:hover {
+            transform: scale(1.05);
+        }
+        .install-banner-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            margin-left: 12px;
+            padding: 0 8px;
+        }
+        .install-button {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s, transform 0.2s;
+            z-index: 10;
+        }
+        .install-button.show {
+            display: flex;
+        }
+        .install-button:hover {
+            background: #1b5e20;
+            transform: scale(1.05);
+        }
+        h2 {
+            color: var(--primary);
+            margin-top: 0;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 800;
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+        }
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #888;
+            font-weight: 700;
+            margin: 22px 0 12px 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+        }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #444;
+        }
+        .hint {
+            font-size: 12px;
+            color: #777;
+            font-weight: normal;
+            margin-top: 2px;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="number"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(251, 119, 1, 0.15);
+            outline: none;
+        }
+        .analysis-box {
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .analysis-box.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        .analysis-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .analysis-row:last-child {
+            margin-bottom: 0;
+        }
+        .analysis-row strong {
+            color: var(--success);
+            font-size: 16px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            background: var(--secondary);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #FFD8B8;
+        }
+        .checkbox-group input {
+            margin-right: 10px;
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+        .checkbox-group label {
+            margin: 0;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--primary-dark);
+        }
+        .client-summary {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .client-summary.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        .client-summary .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .client-summary .summary-row strong {
+            color: var(--info);
+        }
+        .results {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+            transition: opacity 0.3s ease;
+            border: 2px solid #e0e0e0;
+        }
+        .result-item {
+            background: white;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .result-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .result-item.conversion {
+            border-left-color: var(--info);
+        }
+        .result-item.tax {
+            border-left-color: var(--warning);
+        }
+        .result-item.profit {
+            border-left-color: var(--success);
+        }
+        .result-item-label {
+            font-size: 13px;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .result-item-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text);
+        }
+        .result-item.conversion .result-item-value {
+            color: var(--info);
+        }
+        .result-item.tax .result-item-value {
+            color: var(--warning);
+        }
+        .result-item.profit .result-item-value {
+            color: var(--success);
+        }
+        .result-total {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+            box-shadow: 0 4px 16px rgba(251, 119, 1, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-total-label {
+            font-size: 16px;
+            font-weight: 800;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .result-total-value {
+            font-size: 28px;
+            font-weight: 900;
+            color: white;
+        }
+        .copy-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 18px;
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .copy-btn:hover { background-color: var(--primary-dark); }
+        .copy-btn:active { transform: scale(0.98); }
+        .copy-btn.copied { background-color: var(--success); }
+        
+        .footer-note {
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+            margin-top: 20px;
+            line-height: 1.4;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        
+        body.install-banner-visible {
+            padding-bottom: 80px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-card">
+    <button class="install-button" id="installBtn" onclick="instalarApp()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        Instalar App
+    </button>
+    
+    <h2>📦 CÁLCULO DE COBROS TEMU</h2>
+    
+    <div class="section-title">1. Datos de la Compra (Pedido General)</div>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="montoTemu">Monto cobrado por Temu:</label>
+            <input type="number" id="montoTemu" placeholder="Ej: 37156" min="0" step="0.01" oninput="calcular()">
+            <div class="hint">Generalmente en USD ($)</div>
+        </div>
+        <div class="form-group">
+            <label for="montoWink">Monto cobrado por Wink:</label>
+            <input type="number" id="montoWink" placeholder="Ej: 39744" min="0" step="0.01" oninput="calcular()">
+            <div class="hint">En colones (₡)</div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="tcReferencia">Tipo de Cambio de Referencia:</label>
+        <input type="number" id="tcReferencia" value="1" min="1" step="0.01" oninput="calcular()">
+        <div class="hint">Dejar en <strong>1</strong> si ambos montos de arriba ya están en colones.</div>
+    </div>
+
+    <div class="analysis-box" id="analysisBox">
+        <div class="analysis-row">
+            <span>Tasa de conversión efectiva:</span>
+            <span id="resTasaEfectiva">0.00</span>
+        </div>
+        <div class="analysis-row">
+            <span>% de Recargo/Conversión aplicado:</span>
+            <strong id="resPorcentajeConversion">0.00%</strong>
+        </div>
+    </div>
+
+    <div class="section-title">2. Datos del Cliente (Monto a Cobrar)</div>
+    
+    <div class="form-group">
+        <label for="montoCliente">Total de compra de productos del cliente:</label>
+        <input type="number" id="montoCliente" placeholder="Ej: 15000" min="0" step="0.01" oninput="calcular()">
+        <div class="hint">Monto que el cliente debe pagar (en la misma moneda que el monto Temu)</div>
+    </div>
+
+    <div class="client-summary" id="clientSummary">
+        <div class="summary-row">
+            <span>Monto base del cliente:</span>
+            <span id="resMontoBaseCliente">₡0.00</span>
+        </div>
+        <div class="summary-row">
+            <span>Recargo de conversión (<span id="lblPorcentaje">0</span>%):</span>
+            <strong id="resRecargoCliente">₡0.00</strong>
+        </div>
+    </div>
+
+    <div class="checkbox-group">
+        <input type="checkbox" id="aplicarIva" onchange="calcular()" checked>
+        <label for="aplicarIva">Sumar 13% de Impuesto</label>
+    </div>
+
+    <div class="form-group">
+        <label for="gananciaFlete">Ganancia o costo por Flete (₡):</label>
+        <input type="number" id="gananciaFlete" value="0" min="0" step="0.01" oninput="calcular()">
+    </div>
+
+    <div class="section-title">3. Total a Cobrar al Cliente</div>
+    
+    <div class="results" id="resultsBox" style="opacity: 0.6;">
+        <div class="result-item conversion">
+            <div class="result-item-label">💱 Monto Base + Conversión</div>
+            <div class="result-item-value" id="resBaseConversion">₡0.00</div>
+        </div>
+        
+        <div class="result-item tax">
+            <div class="result-item-label">📋 Impuesto (13%)</div>
+            <div class="result-item-value" id="resImpuesto">₡0.00</div>
+        </div>
+        
+        <div class="result-item profit">
+            <div class="result-item-label">🚚 Ganancia por Flete</div>
+            <div class="result-item-value" id="resFlete">₡0.00</div>
+        </div>
+        
+        <div class="result-total">
+            <div class="result-total-label">TOTAL A COBRAR</div>
+            <div class="result-total-value" id="resTotal">₡0.00</div>
+        </div>
+        
+        <button class="copy-btn" id="copyBtn" onclick="copiarTotal()">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            Copiar monto total
+        </button>
+    </div>
+
+    <div class="footer-note">
+        * El % de conversión se calcula automáticamente comparando Temu vs Wink. Este % se aplica al monto de cada cliente junto con el IVA y el flete.
+    </div>
+</div>
+
+<div class="install-banner" id="installBanner">
+    <div class="install-banner-text">
+        📱 ¡Instala esta app en tu teléfono!
+    </div>
+    <button class="install-banner-btn" onclick="instalarApp()">Instalar</button>
+    <button class="install-banner-close" onclick="cerrarBanner()">×</button>
+</div>
+
+<script>
+    const CONFIG = {
+        TASA_IVA: 0.13,
+        LOCALE: 'es-CR',
+        CURRENCY: 'CRC'
+    };
+
+    const formatMoney = (amount) => {
+        return new Intl.NumberFormat(CONFIG.LOCALE, {
+            style: 'currency',
+            currency: CONFIG.CURRENCY,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(amount);
+    };
+
+    function calcular() {
+        const montoTemu = parseFloat(document.getElementById('montoTemu').value) || 0;
+        const montoWink = parseFloat(document.getElementById('montoWink').value) || 0;
+        const tcReferencia = parseFloat(document.getElementById('tcReferencia').value) || 1;
+
+        const analysisBox = document.getElementById('analysisBox');
+        let porcentajeConversion = 0;
+
+        if (montoTemu > 0 && montoWink > 0) {
+            analysisBox.classList.add('active');
+            
+            const tasaEfectiva = montoWink / montoTemu;
+            porcentajeConversion = ((tasaEfectiva - tcReferencia) / tcReferencia) * 100;
+            
+            document.getElementById('resTasaEfectiva').innerText = tasaEfectiva.toFixed(2) + ' CRC/USD';
+            
+            const elPorcentaje = document.getElementById('resPorcentajeConversion');
+            elPorcentaje.innerText = (porcentajeConversion > 0 ? '+' : '') + porcentajeConversion.toFixed(2) + '%';
+            
+            if (porcentajeConversion <= 3) {
+                elPorcentaje.style.color = 'var(--success)';
+            } else if (porcentajeConversion <= 8) {
+                elPorcentaje.style.color = 'var(--warning)';
+            } else {
+                elPorcentaje.style.color = 'var(--danger)';
+            }
+        } else {
+            analysisBox.classList.remove('active');
+        }
+
+        const montoCliente = parseFloat(document.getElementById('montoCliente').value) || 0;
+        const aplicarIva = document.getElementById('aplicarIva').checked;
+        const gananciaFlete = parseFloat(document.getElementById('gananciaFlete').value) || 0;
+
+        const clientSummary = document.getElementById('clientSummary');
+        const resultsBox = document.getElementById('resultsBox');
+
+        if (montoCliente > 0) {
+            clientSummary.classList.add('active');
+            resultsBox.style.opacity = '1';
+
+            const montoBaseCliente = montoCliente * tcReferencia;
+            const recargoCliente = montoBaseCliente * (porcentajeConversion / 100);
+            const montoConConversion = montoBaseCliente + recargoCliente;
+
+            document.getElementById('resMontoBaseCliente').innerText = formatMoney(montoBaseCliente);
+            document.getElementById('lblPorcentaje').innerText = porcentajeConversion.toFixed(2);
+            document.getElementById('resRecargoCliente').innerText = formatMoney(recargoCliente);
+
+            const impuesto = aplicarIva ? montoConConversion * CONFIG.TASA_IVA : 0;
+            const totalCobrar = montoConConversion + impuesto + gananciaFlete;
+
+            document.getElementById('resBaseConversion').innerText = formatMoney(montoConConversion);
+            document.getElementById('resImpuesto').innerText = formatMoney(impuesto);
+            document.getElementById('resFlete').innerText = formatMoney(gananciaFlete);
+            document.getElementById('resTotal').innerText = formatMoney(totalCobrar);
+        } else {
+            clientSummary.classList.remove('active');
+            resultsBox.style.opacity = '0.6';
+            document.getElementById('resBaseConversion').innerText = '₡0.00';
+            document.getElementById('resImpuesto').innerText = '₡0.00';
+            document.getElementById('resFlete').innerText = '₡0.00';
+            document.getElementById('resTotal').innerText = '₡0.00';
+        }
+    }
+
+    function copiarTotal() {
+        const totalTexto = document.getElementById('resTotal').innerText;
+        const textoLimpio = totalTexto.replace(/[^\d\.]/g, ''); 
+        
+        navigator.clipboard.writeText(textoLimpio).then(() => {
+            const btn = document.getElementById('copyBtn');
+            const originalHTML = btn.innerHTML;
+            
+            btn.classList.add('copied');
+            btn.innerHTML = `
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                ¡Monto copiado al portapapeles!
+            `;
+            
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = originalHTML;
+            }, 2500);
+        }).catch(err => {
+            console.error('Error al copiar:', err);
+            alert('Por favor, selecciona y copia el monto manualmente.');
+        });
+    }
+
+    // PWA Installation
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+    const installBanner = document.getElementById('installBanner');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.classList.add('show');
+        
+        setTimeout(() => {
+            if (!localStorage.getItem('installBannerDismissed')) {
+                installBanner.classList.add('show');
+                document.body.classList.add('install-banner-visible');
+            }
+        }, 3000);
+    });
+
+    async function instalarApp() {
+        if (!deferredPrompt) {
+            alert('Para instalar esta app:\n\n1. Abre el menú del navegador (⋮)\n2. Selecciona "Agregar a la pantalla principal" o "Instalar aplicación"\n3. Confirma la instalación');
+            return;
+        }
+        
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        deferredPrompt = null;
+        installBtn.classList.remove('show');
+        cerrarBanner();
+        
+        if (outcome === 'accepted') {
+            alert('¡App instalada exitosamente! 🎉\n\nBúscala en tu pantalla de inicio.');
+        }
+    }
+
+    function cerrarBanner() {
+        installBanner.classList.remove('show');
+        document.body.classList.remove('install-banner-visible');
+        localStorage.setItem('installBannerDismissed', 'true');
+    }
+
+    window.addEventListener('appinstalled', () => {
+        installBtn.classList.remove('show');
+        cerrarBanner();
+        deferredPrompt = null;
+    });
+
+    // Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js').catch((err) => {
+            console.log('Service Worker no registrado:', err);
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', calcular);
+</script>
+
+</body>
+</html>

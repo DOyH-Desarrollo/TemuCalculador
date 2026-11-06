@@ -1,0 +1,25 @@
+{
+    "name": "Calculadora TEMU",
+    "short_name": "Cálculo TEMU",
+    "description": "Sistema de cálculo de cobros para pedidos TEMU",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#f4f6f9",
+    "theme_color": "#FB7701",
+    "orientation": "portrait",
+    "scope": "./",
+    "icons": [
+        {
+            "src": "./icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
